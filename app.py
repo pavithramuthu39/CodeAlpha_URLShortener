@@ -3,10 +3,18 @@ from flask import Flask, request, redirect, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import string
 import random
+import os
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///urls.db"
+database_url = os.environ.get("DATABASE_URL", "sqlite:///urls.db")
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -36,8 +44,9 @@ def home():
 @app.route("/shorten", methods=["POST"])
 def shorten_url():
     original_url = request.form.get("original_url", "").strip()
+    parsed_url = urlparse(original_url)
 
-    if not original_url.startswith(("http://", "https://")):
+    if parsed_url.scheme not in ("http", "https") or not parsed_url.netloc:
         return jsonify({"error": "Enter a valid URL starting with http:// or https://"}), 400
 
     code = generate_short_code()

@@ -73,6 +73,12 @@
             overflow-wrap: anywhere;
         }
 
+        #copyButton {
+            width: auto;
+            margin-top: 12px;
+            padding: 10px 20px;
+        }
+
         a {
             color: #7dd3fc;
         }
@@ -114,11 +120,13 @@
     <script>
         const form = document.getElementById("urlForm");
         const result = document.getElementById("result");
+        const submitButton = form.querySelector("button");
 
         form.addEventListener("submit", async function(event) {
             event.preventDefault();
 
-            result.innerHTML = "Creating short URL...";
+            result.textContent = "Creating short URL...";
+            submitButton.disabled = true;
 
             const formData = new FormData(form);
 
@@ -131,22 +139,32 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    result.innerHTML = data.error || "Something went wrong.";
+                    result.textContent = data.error || "Something went wrong.";
                     return;
                 }
 
-                result.innerHTML = `
-                    <h3>Your Short URL</h3>
-                    <a href="${data.short_url}" target="_blank">
-                        ${data.short_url}
-                    </a>
-                    <br><br>
-                    <button onclick="copyLink('${data.short_url}')">
-                        Copy Link
-                    </button>
-                `;
+                result.replaceChildren();
+
+                const heading = document.createElement("h3");
+                heading.textContent = "Your Short URL";
+
+                const link = document.createElement("a");
+                link.href = data.short_url;
+                link.target = "_blank";
+                link.rel = "noopener";
+                link.textContent = data.short_url;
+
+                const copyButton = document.createElement("button");
+                copyButton.id = "copyButton";
+                copyButton.type = "button";
+                copyButton.textContent = "Copy Link";
+                copyButton.addEventListener("click", () => copyLink(data.short_url));
+
+                result.append(heading, link, document.createElement("br"), copyButton);
             } catch (error) {
-                result.innerHTML = "Unable to connect to the server.";
+                result.textContent = "Unable to connect to the server.";
+            } finally {
+                submitButton.disabled = false;
             }
         });
 
