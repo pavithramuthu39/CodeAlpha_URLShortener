@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAlpha URL Shortener</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e3a8a, #312e81);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #cbd5e1;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #7dd3fc;
+        }
+
+        #result {
+            margin-top: 25px;
+            overflow-wrap: anywhere;
+        }
+
+        a {
+            color: #7dd3fc;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>URL Shortener</h1>
+        <p>Convert long URLs into short and simple links.</p>
+
+        <form id="urlForm">
+            <input
+                type="url"
+                name="original_url"
+                id="original_url"
+                placeholder="Enter your long URL"
+                required
+            >
+
+            <button type="submit">Shorten URL</button>
+        </form>
+
+        <div id="result"></div>
+
+        <p class="footer">
+            CodeAlpha Backend Development Internship
+        </p>
+
+    </div>
+
+    <script>
+        const form = document.getElementById("urlForm");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            result.innerHTML = "Creating short URL...";
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch("/shorten", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    result.innerHTML = data.error || "Something went wrong.";
+                    return;
+                }
+
+                result.innerHTML = `
+                    <h3>Your Short URL</h3>
+                    <a href="${data.short_url}" target="_blank">
+                        ${data.short_url}
+                    </a>
+                    <br><br>
+                    <button onclick="copyLink('${data.short_url}')">
+                        Copy Link
+                    </button>
+                `;
+            } catch (error) {
+                result.innerHTML = "Unable to connect to the server.";
+            }
+        });
+
+        function copyLink(link) {
+            navigator.clipboard.writeText(link)
+                .then(() => alert("Short URL copied!"))
+                .catch(() => alert("Copy failed. Please copy it manually."));
+        }
+    </script>
+
+</body>
+</html>
